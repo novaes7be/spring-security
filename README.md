@@ -1,12 +1,12 @@
 # Spring Essentials — JPA & Security Training
 
-Projeto de estudo em **Java + Spring Boot**, criado para praticar dois pilares muito usados no dia a dia de back-end: **persistência de dados com Spring Data JPA** e **autenticação/autorização com Spring Security + JWT**.
+Projeto de estudo em Java com Spring Boot, feito para praticar dois pilares que aparecem em quase todo back-end: persistência de dados com Spring Data JPA e autenticação/autorização com Spring Security + JWT.
 
-Este README foi escrito pensando em quem está começando com Spring Boot — cada seção explica não só *o que* o código faz, mas *por que* ele existe.
+Esse README existe porque, quando eu estava aprendendo, sempre faltava alguém explicando o "por quê" por trás do código, não só o "o quê". Então é isso que tentei fazer aqui.
 
 ---
 
-## 📦 Sobre o projeto
+## Sobre o projeto
 
 A API gerencia um domínio de treino/academia, com recursos como:
 
@@ -17,104 +17,104 @@ A API gerencia um domínio de treino/academia, com recursos como:
 - Produtos
 - Autenticação (registrar / login)
 
-Esses endpoints foram testados via Postman, como mostra a collection abaixo:
+Esses endpoints foram testados via Postman, como mostra o print abaixo:
 
-![Postman - Login retornando JWT](postman-login.png)
+![Postman - Login retornando JWT](docs/postman-login.png)
 
-> No print acima, o endpoint `POST /v1/auth/login` retorna um **token JWT** e o tempo de expiração (`expiresIn`). Esse token é usado depois para acessar as rotas protegidas.
+No print, o endpoint `POST /v1/auth/login` retorna um token JWT e o tempo de expiração (`expiresIn`). Esse token é o que a gente usa depois pra acessar as rotas protegidas.
 
 ---
 
-## 🗄️ Parte 1 — Spring Data JPA
+## Parte 1 — Spring Data JPA
 
-O **Spring Data JPA** é o módulo do Spring que abstrai a comunicação com o banco de dados relacional. Em vez de escrever SQL na mão para cada operação, você trabalha com **entidades Java** e **interfaces de repositório**, e o Spring gera as queries por baixo dos panos.
+Spring Data JPA é o módulo do Spring que abstrai a comunicação com o banco de dados relacional. Em vez de escrever SQL na mão pra cada operação, você trabalha com entidades Java e interfaces de repositório, e o Spring gera as queries por baixo dos panos.
 
-Conceitos-chave usados neste projeto:
+Conceitos usados neste projeto:
 
-| Conceito | O que é | Para que serve aqui |
+| Conceito | O que é | Onde entra aqui |
 |---|---|---|
-| `@Entity` | Anotação que transforma uma classe Java em uma tabela do banco | Modelar Exercicio, Avaliacao, Aluno, Treino, Produto |
-| `JpaRepository<T, ID>` | Interface pronta do Spring com métodos como `save()`, `findById()`, `deleteById()` | Evita escrever CRUD manual para cada entidade |
-| Query Methods | Métodos como `findByGrupoMuscular(...)` | Usado em "Listar Exercícios By grupo", por exemplo |
-| DTOs | Classes que representam o formato de entrada/saída da API | Evita expor a entidade do banco diretamente no JSON de resposta |
+| `@Entity` | Anotação que transforma uma classe Java em tabela do banco | Exercicio, Avaliacao, Aluno, Treino, Produto |
+| `JpaRepository<T, ID>` | Interface pronta do Spring com `save()`, `findById()`, `deleteById()` etc. | Evita escrever CRUD na mão pra cada entidade |
+| Query Methods | Métodos como `findByGrupoMuscular(...)` | Usado em "Listar Exercícios By grupo" |
+| DTOs | Classes que representam o formato de entrada/saída da API | Evita expor a entidade do banco direto no JSON |
 
-### Fluxo típico de uma requisição JPA
+### Fluxo de uma requisição
 
 ```
 Cliente (Postman) → Controller → Service → Repository → Banco de Dados
 ```
 
-1. O **Controller** recebe a requisição HTTP (ex: `POST /v1/exercicio`).
-2. O **Service** aplica as regras de negócio.
-3. O **Repository** (via Spring Data JPA) conversa com o banco.
-4. A resposta volta em formato JSON.
+1. O Controller recebe a requisição HTTP (ex: `POST /v1/exercicio`).
+2. O Service aplica as regras de negócio.
+3. O Repository, via Spring Data JPA, conversa com o banco.
+4. A resposta volta em JSON.
 
-> 💡 Dica para iniciantes: você raramente implementa o Repository — normalmente basta criar uma interface que estende `JpaRepository`, e o Spring gera a implementação em tempo de execução.
+Uma coisa que confunde bastante gente no começo: você quase nunca implementa o Repository na mão. Basta criar uma interface estendendo `JpaRepository`, e o Spring gera a implementação em tempo de execução.
 
 ---
 
-## 🔐 Parte 2 — Spring Security + JWT
+## Parte 2 — Spring Security + JWT
 
-O **Spring Security** é o framework responsável por proteger a aplicação: decidir *quem pode acessar o quê*. Neste projeto ele é combinado com **JWT (JSON Web Token)**, um padrão para autenticação **stateless** (sem guardar sessão no servidor).
+Spring Security é o framework que decide quem pode acessar o quê dentro da aplicação. Aqui ele é combinado com JWT (JSON Web Token), um padrão de autenticação stateless — ou seja, sem guardar sessão no servidor.
 
-### 2.1 `SecurityConfiguration`
+### SecurityConfiguration
 
-Essa classe é o "coração" da configuração de segurança:
+Essa classe centraliza a configuração de segurança:
 
-![SecurityConfiguration](security-config.png)
+![SecurityConfiguration](docs/security-config.png)
 
-O que cada trecho faz, em português claro:
+O que cada trecho faz:
 
-- **`.csrf(AbstractHttpConfigurer::disable)`** — desativa a proteção CSRF, comum em APIs REST stateless (o CSRF é mais relevante em apps que usam sessão/cookies com formulários HTML).
-- **`.sessionManagement(... STATELESS)`** — diz ao Spring para **não criar sessão HTTP**. Cada requisição precisa se autenticar sozinha, geralmente enviando o token JWT no header.
-- **`.exceptionHandling(...)`** — define o que responder quando o usuário não está autenticado (`401 Unauthorized`) ou não tem permissão (`403 Forbidden`).
-- **`.authorizeHttpRequests(...)`** — define as regras de acesso por rota:
-  - `POST /v1/auth/**` com `.permitAll()` → rota pública (ex: login/registro).
+- `.csrf(AbstractHttpConfigurer::disable)` — desativa a proteção CSRF, comum em APIs REST stateless (CSRF importa mais em apps que usam sessão/cookies com formulários HTML).
+- `.sessionManagement(... STATELESS)` — diz ao Spring pra não criar sessão HTTP. Cada requisição se autentica sozinha, geralmente enviando o JWT no header.
+- `.exceptionHandling(...)` — define a resposta quando o usuário não está autenticado (`401`) ou não tem permissão (`403`).
+- `.authorizeHttpRequests(...)` — define as regras de acesso por rota:
+  - `POST /v1/auth/**` com `.permitAll()` → rota pública (login/registro).
   - `POST /v1/auth/**` com `.hasRole("ADMIN")` → só usuários com papel ADMIN.
-  - `.anyRequest().authenticated()` → qualquer outra rota exige estar logado.
-- **`.addFilterBefore(jwtAuthenticationFilter, ...)`** — insere o filtro customizado que lê o token JWT **antes** do filtro padrão de login por usuário/senha do Spring Security.
-- **`PasswordEncoder` (`BCryptPasswordEncoder`)** — garante que senhas nunca sejam salvas em texto puro no banco; o BCrypt aplica hash + salt automaticamente.
+  - `.anyRequest().authenticated()` → qualquer outra rota exige login.
+- `.addFilterBefore(jwtAuthenticationFilter, ...)` — insere o filtro customizado que lê o JWT antes do filtro padrão de login por usuário/senha.
+- `PasswordEncoder` (`BCryptPasswordEncoder`) — garante que senhas nunca sejam salvas em texto puro; o BCrypt aplica hash + salt automaticamente.
 
-### 2.2 Fluxo de autenticação JWT
+### Fluxo de autenticação
 
 ```
 1. Cliente envia login/senha → POST /v1/auth/login
-2. Servidor valida credenciais
+2. Servidor valida as credenciais
 3. Servidor gera um JWT assinado e devolve ao cliente
 4. Cliente envia esse JWT no header Authorization: Bearer <token>
 5. JwtAuthenticationFilter valida o token em cada requisição protegida
 ```
 
-Isso é exatamente o que aparece no print do Postman: o campo `Auth Type = Bearer Token` usa uma variável (`{{auth_secret_1891}}`) que guarda o JWT recebido no login.
+É exatamente o que aparece no print do Postman: o campo `Auth Type = Bearer Token` usa uma variável (`{{auth_secret_1891}}`) que guarda o JWT recebido no login.
 
-> ⚠️ Nunca coloque o token JWT direto no corpo da requisição salvo na collection do Postman/Insomnia se for versionar/compartilhar a collection — prefira variáveis de ambiente, como já é feito aqui.
+Vale o aviso: nunca deixe o token JWT direto no corpo da requisição salva na collection do Postman/Insomnia se for versionar ou compartilhar essa collection. Prefira variáveis de ambiente, como já é feito aqui.
 
-### 2.3 `GlobalExceptionHandler`
+### GlobalExceptionHandler
 
-Trata erros de forma centralizada, devolvendo respostas JSON padronizadas em vez de stack traces:
+Trata erros de forma centralizada, devolvendo respostas JSON padronizadas em vez de stack trace:
 
-![GlobalExceptionHandler](global-exception-handler.png)
+![GlobalExceptionHandler](docs/global-exception-handler.png)
 
-- `NotFoundException` → responde `404 Not Found`
-- `AccessDeniedException` → responde `403 Forbidden` (usuário autenticado, mas sem permissão)
-- `Exception` (genérica) → responde `500 Internal Server Error`
+- `NotFoundException` → `404 Not Found`
+- `AccessDeniedException` → `403 Forbidden` (usuário autenticado, mas sem permissão)
+- `Exception` genérica → `500 Internal Server Error`
 
-A anotação usada normalmente junto a essa classe é `@RestControllerAdvice`, que intercepta exceções lançadas em qualquer Controller da aplicação.
+A anotação usada junto a essa classe costuma ser `@RestControllerAdvice`, que intercepta exceções lançadas em qualquer Controller da aplicação.
 
 ---
 
-## 🔒 Boas práticas de segurança aplicadas neste repositório
+## Boas práticas de segurança aplicadas aqui
 
-- Credenciais e segredos (ex: `application.yaml`, chave de assinatura do JWT) **não são versionados** — estão no `.gitignore`.
+- Credenciais e segredos (arquivo de configuração, chave de assinatura do JWT) não são versionados — estão no `.gitignore`.
 - Senhas são armazenadas com hash (`BCryptPasswordEncoder`), nunca em texto plano.
 - Autenticação stateless via JWT, sem depender de sessão no servidor.
-- Erros tratados de forma centralizada, evitando vazar detalhes internos da aplicação nas respostas.
+- Erros tratados de forma centralizada, sem vazar detalhes internos da aplicação nas respostas.
 
-> ⚠️ **Atenção:** confira se o nome do arquivo real de configuração (`application.yaml`) bate exatamente com o que está no `.gitignore` (`application.yml`). Extensões `.yaml` e `.yml` são diferentes para o Git — se não baterem, o arquivo sensível pode acabar sendo versionado por engano.
+Um detalhe que vale checar de vez em quando: se o nome do arquivo de configuração real (`application.yaml`) bate exatamente com o que está no `.gitignore`. `.yaml` e `.yml` são extensões diferentes pro Git — se não baterem, o arquivo sensível pode acabar sendo versionado por engano.
 
 ---
 
-## 🚀 Como rodar o projeto
+## Como rodar o projeto
 
 ```bash
 ./mvnw spring-boot:run
@@ -130,12 +130,12 @@ curl -X POST http://localhost:8082/v1/auth/login \
   -d '{"login": "seu_usuario", "senha": "sua_senha"}'
 ```
 
-A resposta trará um token JWT que deve ser enviado no header `Authorization: Bearer <token>` nas próximas requisições autenticadas.
+A resposta traz um token JWT que deve ser enviado no header `Authorization: Bearer <token>` nas próximas requisições autenticadas.
 
 ---
 
-## 📚 Próximos passos de estudo sugeridos
+## Próximos passos de estudo
 
-- Entender `@ManyToOne`, `@OneToMany` no JPA para relacionar Aluno ↔ Avaliação ↔ Treino.
-- Explorar `@PreAuthorize` para autorização a nível de método.
-- Estudar refresh tokens (o token atual expira em `expiresIn`, então vale entender como renovar sem pedir login de novo).
+- Entender `@ManyToOne` e `@OneToMany` no JPA pra relacionar Aluno, Avaliação e Treino.
+- Explorar `@PreAuthorize` pra autorização a nível de método.
+- Estudar refresh tokens — o token atual expira em `expiresIn`, vale entender como renovar sem pedir login de novo.
