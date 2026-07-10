@@ -1,0 +1,19 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: spring-essentials-jpa-training
+  datasource:
+    url: jdbc:mysql://localhost:3306/gym_security?createDatabaseIfNotExist=true
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+jwt:
+  expiration: ${JWT_EXPIRATION:900000}
+  key: ${JWT_KEY:Xe1mR4Y7GIaDCCjTPgUX$I&LtnG!dubCvsuFSVAi-SL5tneqlFQA966QLtYR4WWZo6ZHxk&MKTzRPV&lCAS$MvAkTTg2Ylo4BQXfd8cD4kbtE2H0vOs5pD_$rHMH7iGOD0jzs5S9n_oHlDKtX6y9$=WCpCvGMg8odCDgQs7htm!aN#_$U6HK#hXrXNoaLO0evR$a4QogGuxYy3cWSIr8_9xHTCX4x=gRW2iLJ0!llkkQGb7pVAZzLsXstuCnUobWCYKJ&FUFOfn4bDYD-L=maNcnS9ZW4CUEpSaAQZG0IguMQ5GkQ0!wOJ5ADbInX39MLRThdytFWD6qJ!G_jr0Ctus5}
