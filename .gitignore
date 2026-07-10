@@ -33,7 +33,7 @@ build/
 .vscode/
 
 ### Project ###
-application.yml
-application-prod.yml
-application-secrets.yml
+application.yaml
+application-prod.yaml
+application-secrets.yaml
 *.env
